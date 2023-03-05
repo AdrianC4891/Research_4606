@@ -10,7 +10,7 @@ end
 
 %% 
 
-s2WaveGen = dvbs2WaveformGenerator("NumInputStreams",1,"MODCOD",18,"RolloffFactor",0.25 ); % 16APSK 2/3
+s2WaveGen = dvbs2WaveformGenerator("NumInputStreams",1,"MODCOD",6,"RolloffFactor",0.25 ); % QPSK 2/3
 disp(s2WaveGen)
 
 %%
@@ -42,3 +42,10 @@ Fsamp = Fsym*s2WaveGen.SamplesPerSymbol;
 spectrum = spectrumAnalyzer('SampleRate',Fsamp,TimeSpanSource="property",TimeSpan=2);
 spectrum(txWaveform);
 release(spectrum);
+
+%% 
+data = 2*randi([0 1],1e6,1) - 1;
+
+txfilter = comm.RaisedCosineTransmitFilter
+
+filteredData = txfilter(data);
