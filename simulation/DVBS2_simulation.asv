@@ -20,16 +20,15 @@ cfgDVBS2.HasPilots = true;
 cfgDVBS2.SamplesPerSymbol = 2;
 
 simParams.sps = cfgDVBS2.SamplesPerSymbol;             % Samples per symbol
-simParams.numFrames = 50;                              % Number of frames to be processed
+simParams.numFrames = 1;                              % Number of frames to be processed
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
-simParams.EbNodB = 2.1;                                % Channel Eb/No in dB
 
 % From Eb/No to Es/No
-EbNo = 2.1;
+EbNo = 1.0;
 % SamplesPerSymbol ignored if esno mode enabled
 EsNo = convertSNR(EbNo,"ebno","esno", "BitsPerSymbol",2, "CodingRate",2/3);
 fprintf("EbNo = %f, EsNo = %f\n",EbNo, EsNo);
-simParams.EsNodB = 2.1; %EsNo;
+simParams.EsNodB = EsNo;
 
 %%
 [data,txOut,rxIn,rxParams] = DVBS2RxInputGeneratePBNJ(cfgDVBS2,simParams);
@@ -86,6 +85,9 @@ postRx = postRx(RecFilter.FilterSpanInSymbols+1:end);
 
 %% Recover Bits
 
+isValid = 1;
+
+syncOut = postRx;
 
 normFlag = cfgDVBS2.MODCOD >= 18 && strcmpi(cfgDVBS2.ScalingMethod,'Outer radius as 1');
 
@@ -100,32 +102,32 @@ dataStInd = 1;
 isLastFrame = false;
 % symSyncOutLen = zeros(rxParams.initialTimeFreqSync,1);
 
-% while stIdx < length(rxIn)
+while stIdx < length(rxIn)
 
     % Use one DVB-S2 PL frame for each iteration.
-%     endIdx = stIdx + rxParams.plFrameSize*simParams.sps;
-% 
-%     % In the last iteration, all the remaining samples in the received
-%     % waveform are considered.
-%     isLastFrame = endIdx > length(rxIn);
-%     endIdx(isLastFrame) = length(rxIn);
-%     rxData = rxIn(stIdx+1:endIdx);
+    endIdx = stIdx + rxParams.plFrameSize*simParams.sps;
+
+    % In the last iteration, all the remaining samples in the received
+    % waveform are considered.
+    isLastFrame = endIdx > length(rxIn);
+    endIdx(isLastFrame) = length(rxIn);
+    rxData = rxIn(stIdx+1:endIdx);
 
     % Decode the PL header by using the HelperDVBS2PLHeaderRecover helper
     % function. Start of frame (SOF) is 26 symbols, which are discarded
     % before header decoding. They are only required for frame
     % synchronization.
-    rxPLSCode = postRx(27:90);
+    rxPLSCode = syncOut(27:90);
     [M,R,fecFrame,pilotStat] = HelperDVBS2PLHeaderRecover(rxPLSCode);
     xFECFrameLen = fecFrame/log2(M);
     % Validate the decoded PL header.
-    if  M ~= rxParams.modOrder || R ~= rxParams.codeRate || ...
+    if M ~= rxParams.modOrder || R ~= rxParams.codeRate || ...
             fecFrame ~= rxParams.cwLen || ~pilotStat
         fprintf('%s\n','PL header decoding failed')
         dataStInd = dataStInd + 1;
     else % Demodulation and decoding
-        for frameCnt = 1:length(postRx)/plFrameSize
-            rxFrame = postRx((frameCnt-1)*plFrameSize+1:frameCnt*plFrameSize);
+        for frameCnt = 1:length(syncOut)/plFrameSize
+            rxFrame = syncOut((frameCnt-1)*plFrameSize+1:frameCnt*plFrameSize);
             % Estimate noise variance by using
             % HelperDVBS2NoiseVarEstimate helper function.
             nVar = HelperDVBS2NoiseVarEstimate(rxFrame,rxParams.pilotInd,...
@@ -174,7 +176,7 @@ isLastFrame = false;
             dataStInd = dataStInd + 1;
         end
     end
-% end
+end
 
 %% Compute the BER and PER
 

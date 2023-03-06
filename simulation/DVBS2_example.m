@@ -9,9 +9,10 @@ if ~exist('dvbs2xLDPCParityMatrices.mat','file')
 end
 
 %%
+ModCod = 6;
 cfgDVBS2.StreamFormat = "TS";
 cfgDVBS2.FECFrame = "normal";
-cfgDVBS2.MODCOD = 18;                             % 16APSK 2/3
+cfgDVBS2.MODCOD = ModCod;                             % 16APSK 2/3
 cfgDVBS2.DFL = 42960;
 cfgDVBS2.ScalingMethod = "Unit average power";
 cfgDVBS2.RolloffFactor = 0.35;
