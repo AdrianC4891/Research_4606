@@ -1,4 +1,4 @@
-function [data, txOut, rxIn, rxParams] = HelperDVBS2RxInputGenerate(cfg, simParams)
+function [data, txOut, rxIn, rxParams] = DVBS2RxInputGeneratePBNJ(cfg, simParams)
 %HelperDVBS2RxInputGenerate Generates DVB-S2 single stream receiver input
 %and initializes the receiver parameters
 %
@@ -86,12 +86,15 @@ end
 % DVB-S2 waveform generation. Flush the transmit filter to handle filter delay and retrieve the last PL frame completely 
 txOut = [s2WaveGen(data);flushFilter(s2WaveGen)];
 
-% Passing through AWGN channel
-rxIn = awgn(txOut, simParams.EsNodB - 10*log10(sps), 'measured');
 
 % Receiver parameters generation 
-
 [modOrder, codeRate, cwLen] = satcom.internal.dvbs.getS2PHYParams(s2GenParams.MODCOD, s2GenParams.FECFrame); 
+
+% Passing through AWGN channel
+EsNodB = convertSNR(simParams.EbNodB,"ebno","esno", "BitsPerSymbol",log2(modOrder), "CodingRate",codeRate);
+fprintf("EbNo = %f dB, EsNo = %f dB\n",simParams.EbNodB, EsNodB);
+rxIn = awgn(txOut, EsNodB - 10*log10(sps), 'measured');
+
 
 dataLen = cwLen/log2(modOrder);
 
