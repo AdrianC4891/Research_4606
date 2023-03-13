@@ -90,13 +90,11 @@ txOut = [s2WaveGen(data);flushFilter(s2WaveGen)];
 % Receiver parameters generation 
 [modOrder, codeRate, cwLen] = satcom.internal.dvbs.getS2PHYParams(s2GenParams.MODCOD, s2GenParams.FECFrame); 
 
-% Passing through PBNJ & AWGN channel
+% Passing through PBNJ AWGN channel
+EsNodB = convertSNR(simParams.EbNodB,"ebno","esno", "BitsPerSymbol",log2(modOrder), "CodingRate",codeRate);
+fprintf("EbNo = %f dB, EsNo = %f dB\n",simParams.EbNodB, EsNodB);
+rxIn = awgn(txOut, EsNodB - 10*log10(sps), 'measured');
 
-% EsNodB = convertSNR(simParams.EbNodB,"ebno","esno", "BitsPerSymbol",log2(modOrder), "CodingRate",codeRate);
-% fprintf("EbNo = %f dB, EsNo = %f dB\n",simParams.EbNodB, EsNodB);
-% rxIn = awgn(txOut, EsNodB - 10*log10(sps), 'measured');
-
-rxIn = PBNJ_symb_channel(txOut,simParams.EbNodB, sps,modOrder,codeRate,simParams.JNR, simParams.p);
 
 dataLen = cwLen/log2(modOrder);
 
