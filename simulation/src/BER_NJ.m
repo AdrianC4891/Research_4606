@@ -6,7 +6,7 @@ function Pb_NJ = BER_NJ(EbNo_Arr, BER_N_Arr, JNR, p)
 
     % bound the array at 0 and 1
     Pb_J(Pb_J<0) = 0;
-    Pb_J(Pb_J>0.1) = 0.1;
+    Pb_J(Pb_J>0.1) = max(BER_N_Arr);
 
     % compute 
     Pb_NJ = p*Pb_J + (1-p)*BER_N_Arr;

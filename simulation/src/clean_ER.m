@@ -1,4 +1,4 @@
-function [EbNo,BER] = clean_BER(EbNo_or, BER_or)
+function [EbNo,BER] = clean_ER(EbNo_or, BER_or)
 
     BER_zeros = find(BER_or <= 0);
     

@@ -27,60 +27,60 @@ simParams.chanBW = 36e6;                               % Channel bandwidth in He
 simParams.p = 0.4;                                     % fraction of bandwidth jammed
 simParams.JNR = -20;                                   % jammer to noise ratio (dB)
 
-%% Compute BER as a function of EbNo
+%% Compute FER as a function of EbNo
 
 EbNo = 1:0.05:2; % range of bit snr values to test
 
-ber_values = zeros(1, length(EbNo));
+fer_values = zeros(1, length(EbNo));
 
-for n=1:length(ber_values)
+for n=1:length(fer_values)
     simParams.EbNodB = EbNo(n);
-    ber_values(n) = DVBS2_BER_calculator(cfgDVBS2,simParams);
+    [fer_values(n),~,~] = DVBS2_FER_calculator(cfgDVBS2,simParams);
 end
 
 
 
-%% Plot BER as a function of EbNo
-save_BER = true;
+%% Plot FER as a function of EbNo
+save_FER = true;
 
-[clean_EbNo, clean_ber_values] = clean_BER(EbNo,ber_values);
+[clean_EbNo, clean_fer_values] = clean_ER(EbNo,fer_values);
 
 
-if save_BER
-    EbNo_path = sprintf('data/BER_data/EbNo-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
-    BER_path = sprintf('data/BER_data/BER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
+if save_FER
+    EbNo_path = sprintf('data/FER_data/EbNo-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
+    FER_path = sprintf('data/FER_data/FER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
     save(EbNo_path, "clean_EbNo");
-    save(BER_path,"clean_ber_values");
+    save(FER_path,"clean_fer_values");
 end
 
 
 
 %% actual data
 EbNo_int = 1:0.01:2;
-BER_int = interp1(EbNo,ber_values,EbNo_int,"linear");
+FER_int = interp1(EbNo,fer_values,EbNo_int,"linear");
 
-semilogy(EbNo,ber_values,'o',EbNo_int,BER_int,':.')
+semilogy(EbNo,fer_values,'o',EbNo_int,FER_int,':.')
 hold on
 grid
-legend('Estimated BER')
+legend('Estimated FER')
 xlabel('Eb/No (dB)')
-ylabel('Bit Error Rate')
+ylabel('Frame Error Rate')
 hold off
 
 %% cleaned data
 EbNo_int = 0:0.01:3;
-BER_int = interp1(clean_EbNo,clean_ber_values,EbNo_int,"linear",'extrap');
+FER_int = interp1(clean_EbNo,clean_fer_values,EbNo_int,"linear",'extrap');
 
-semilogy(clean_EbNo,clean_ber_values,'o',EbNo_int,BER_int,':.')
+semilogy(clean_EbNo,clean_fer_values,'o',EbNo_int,FER_int,':.')
 hold on
 grid
-legend('Estimated BER')
+legend('Estimated FER')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
 % hold off
 
 
-%% Theoretical BER in PBNJ symbol by symbol
+%% Theoretical FER in PBNJ symbol by symbol
 
 % linear Jammer to noise ratio
 % p = simParams.p;
@@ -91,28 +91,28 @@ JNR = db2mag(JNR); % convert to magnitude
 S = load(EbNo_path);
 EbNo_N = S.clean_EbNo;
 
-S = load(BER_path);
-BER_N = S.clean_ber_values;
+S = load(FER_path);
+FER_N = S.clean_fer_values;
 
 
-ber_NJ = BER_NJ(clean_EbNo, clean_ber_values, JNR, p);
+fer_NJ = BER_NJ(clean_EbNo, clean_fer_values, JNR, p);
 
 
 
 
-%% Plot BER_NJ
-semilogy(clean_EbNo,ber_NJ,'x-')
+%% Plot FER_NJ
+semilogy(clean_EbNo,fer_NJ,'x-')
 hold on
 grid
-legend('Estimated BER')
+legend('Estimated FER')
 xlabel('Eb/No (dB)')
-ylabel('Bit Error Rate')
+ylabel('Frame Error Rate')
 
-% Plot original BER_N
+% Plot original FER_N
 
-semilogy(EbNo_N,BER_N,'x-')
+semilogy(EbNo_N,FER_N,'x-')
 hold on
 grid
-legend('Estimated BER')
+legend('Estimated FER')
 xlabel('Eb/No (dB)')
-ylabel('Bit Error Rate')
+ylabel('Frame Error Rate')

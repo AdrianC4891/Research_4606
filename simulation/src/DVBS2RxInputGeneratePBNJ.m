@@ -96,7 +96,9 @@ txOut = [s2WaveGen(data);flushFilter(s2WaveGen)];
 % fprintf("EbNo = %f dB, EsNo = %f dB\n",simParams.EbNodB, EsNodB);
 % rxIn = awgn(txOut, EsNodB - 10*log10(sps), 'measured');
 
-rxIn = PBNJ_symb_channel(txOut,simParams.EbNodB, sps,modOrder,codeRate,simParams.JNR, simParams.p);
+[rxIn,pctPLH,pctPLF] = PBNJ_symb_channel(txOut,simParams.EbNodB, sps,modOrder,codeRate,simParams.JNR, simParams.p);
+rxParams.pctPLH = pctPLH;
+rxParams.pctPLF = pctPLF;
 
 dataLen = cwLen/log2(modOrder);
 

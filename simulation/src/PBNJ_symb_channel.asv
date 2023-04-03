@@ -29,15 +29,11 @@ function [rxIn,pctPLH,pctPLF] = PBNJ_symb_channel(txOut, EbNo, sps, modOrder, co
             if ((n-1)/sps + 1) <= 90
                 pctPLH = pctPLH + 1;
             else
-                pctPLF = pctPLF + 1;
-            end
+                pctPLF = pctPLH + 1;
 %             jammer = wgn(sps,1,pow2db(sqrt(2)*jammer_power), 'complex');
             rxIn(n:n+sps-1) = rxIn(n:n+sps-1) + jammer;
         end
     end
-
-    pctPLH = pctPLH/90; % percentage of PLHeader symbols jammed
-    pctPLF = pctPLF/(length(txOut)/sps - 90); % percentage of PLFrame symbols jammed
   
     fprintf("EbNo = %f dB, EsNo = %f dB, JNR = %f, p = %f\n",EbNo, EsNodB, JNR, p);
 
