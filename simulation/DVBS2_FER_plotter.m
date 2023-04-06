@@ -32,10 +32,12 @@ simParams.JNR = -20;                                   % jammer to noise ratio (
 EbNo = 1:0.05:2; % range of bit snr values to test
 
 fer_values = zeros(1, length(EbNo));
+pctPLH_values = zeros(1, length(EbNo));
+pctPLF_values = zeros(1, length(EbNo));
 
 for n=1:length(fer_values)
     simParams.EbNodB = EbNo(n);
-    [fer_values(n),~,~] = DVBS2_FER_calculator(cfgDVBS2,simParams);
+    [fer_values(n),pctPLH_values(n),pctPLF_values(n)] = DVBS2_FER_calculator(cfgDVBS2,simParams);
 end
 
 
@@ -56,10 +58,11 @@ end
 
 
 %% actual data
-EbNo_int = 1:0.01:2;
-FER_int = interp1(EbNo,fer_values,EbNo_int,"linear");
+pctPLH_int = 0:0.01:1;
+% FER_int = interp1(pctPLH_values,fer_values,pctPLH_int,"linear");
 
-semilogy(EbNo,fer_values,'o',EbNo_int,FER_int,':.')
+plot(pctPLH_values,fer_values,'o')
+% semilogy(EbNo,fer_values,'o',pctPLH_int,FER_int,':.')
 hold on
 grid
 legend('Estimated FER')
@@ -68,10 +71,10 @@ ylabel('Frame Error Rate')
 hold off
 
 %% cleaned data
-EbNo_int = 0:0.01:3;
-FER_int = interp1(clean_EbNo,clean_fer_values,EbNo_int,"linear",'extrap');
+pctPLH_int = 0:0.01:1;
+FER_int = interp1(clean_EbNo,clean_fer_values,pctPLH_int,"linear",'extrap');
 
-semilogy(clean_EbNo,clean_fer_values,'o',EbNo_int,FER_int,':.')
+semilogy(clean_EbNo,clean_fer_values,'o',pctPLH_int,FER_int,':.')
 hold on
 grid
 legend('Estimated FER')

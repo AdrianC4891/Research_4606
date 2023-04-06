@@ -1,11 +1,12 @@
 %% Add LDPC matrices
-if ~exist('dvbs2xLDPCParityMatrices.mat','file')
-    if ~exist('s2xLDPCParityMatrices.zip','file')
+if ~exist('data/s2xLDPCParityMatrices/dvbs2xLDPCParityMatrices.mat','file')
+    if ~exist('data/s2xLDPCParityMatrices/s2xLDPCParityMatrices.zip','file')
         url = 'https://ssd.mathworks.com/supportfiles/spc/satcom/DVB/s2xLDPCParityMatrices.zip';
-        websave('s2xLDPCParityMatrices.zip',url);
-        unzip('s2xLDPCParityMatrices.zip');
+        websave('data/s2xLDPCParityMatrices/s2xLDPCParityMatrices.zip',url);
+        unzip('data/s2xLDPCParityMatrices/s2xLDPCParityMatrices.zip');
     end
-addpath('s2xLDPCParityMatrices');
+else
+    addpath('data/s2xLDPCParityMatrices');
 end
 
 %% 

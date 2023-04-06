@@ -90,8 +90,8 @@ function [fer,pctPLH,pctPLF] = DVBS2_FER_calculator(cfgDVBS2, simParams)
     end
     
     fer = numFramesLost/simParams.numFrames; % frame error rate calculation
-    pctPLH = 0;
-    pctPLF = 0;
+    pctPLH = rxParams.pctPLH;
+    pctPLF = rxParams.pctPLF;
     % Compute the BER and PER
     
     % For GS and TS packetized streams
