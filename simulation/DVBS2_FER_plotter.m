@@ -25,12 +25,13 @@ simParams.numFrames = 10;                              % Number of frames to be 
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
 simParams.EbNodB = 2;                                  % Energy per bit to noise ratio
 % simParams.p = 0.4;                                     % fraction of bandwidth jammed
-simParams.JNR = -20;                                   % jammer to noise ratio (dB)
+simParams.JNR = 1;                                   % jammer to noise ratio (dB)
+simParams.onlySOF = false;
 
 %% Compute FER as a function of EbNo
 
 p_values = 0:0.1:1; % range of fraction of band jammed values to test
-num_trials = 30;
+num_trials = 10;
 
 fer_values = zeros(1, length(p_values)); % averaged fer values
 pctPLH_values = zeros(1, length(p_values));

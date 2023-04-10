@@ -26,6 +26,7 @@ simParams.chanBW = 36e6;                               % Channel bandwidth in He
 simParams.EbNodB = 1.5;                                  % Energy per bit to noise ratio
 % simParams.p = 0.4;                                     % fraction of bandwidth jammed
 simParams.JNR = -20;                                   % jammer to noise ratio (dB)
+simParams.onlySOF = true;
 
 %% Compute FER as a function of EbNo
 

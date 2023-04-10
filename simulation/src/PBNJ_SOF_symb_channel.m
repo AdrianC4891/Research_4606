@@ -1,9 +1,13 @@
-function [rxIn,pctPLH,pctPLF] = PBNJ_symb_channel(txOut, EbNo, sps, modOrder, codeRate, ...
-    JNR, p)
+function [rxIn,pctPLH,pctPLF] = PBNJ_SOF_symb_channel(txOut, EbNo, sps, modOrder, codeRate, ...
+    JNR, p, simParams)
     
     rxIn = zeros(length(txOut),1);
     pctPLH = 0;
     pctPLF = 0;
+
+    numFrames = simParams.numFrames;
+    filter_flush = sps*10;
+    frameLen = (length(txOut)-filter_flush)/numFrames;
     
     % find power of signal for noise and jammer power
     sig_power = mean(abs(txOut).^2);
@@ -22,6 +26,9 @@ function [rxIn,pctPLH,pctPLF] = PBNJ_symb_channel(txOut, EbNo, sps, modOrder, co
 
     % Passs through awgn channel
     rxIn = awgn(txOut,SNR_dB,'measured');
+
+    
+
     % 1 symbol transmitted per hop
     for n=1:sps:length(txOut)
         isJammed = binornd(1,p); % bernoulli distribution
