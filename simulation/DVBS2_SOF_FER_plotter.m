@@ -23,7 +23,7 @@ cfgDVBS2.SamplesPerSymbol = 2;
 simParams.sps = cfgDVBS2.SamplesPerSymbol;             % Samples per symbol
 simParams.numFrames = 10;                              % Number of frames to be processed
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
-simParams.EbNodB = 2;                                  % Energy per bit to noise ratio
+simParams.EbNodB = 1.5;                                  % Energy per bit to noise ratio
 % simParams.p = 0.4;                                     % fraction of bandwidth jammed
 simParams.JNR = -20;                                   % jammer to noise ratio (dB)
 
@@ -59,8 +59,8 @@ save_FER = true;
 
 
 if save_FER
-    p_path = sprintf('data/FER_data/p-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames);
-    FER_path = sprintf('data/FER_data/FER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames);
+    p_path = sprintf('data/FER_data/p-modcod%d-%d-%d-%1.1f.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB);
+    FER_path = sprintf('data/FER_data/FER-modcod%d-%d-%d-%1.1f.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB);
     save(p_path, "clean_p");
     save(FER_path,"clean_fer_values");
 end

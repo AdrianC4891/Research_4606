@@ -1,5 +1,5 @@
 function [rxIn,pctPLH,pctPLF] = PBNJ_symb_channel(txOut, EbNo, sps, modOrder, codeRate, ...
-    JNR, p)
+    JNR, p, onlySOF)
     
     rxIn = zeros(length(txOut),1);
     pctPLH = 0;
