@@ -13,8 +13,8 @@ end
 
 cfgDVBS2.StreamFormat = "TS";
 cfgDVBS2.FECFrame = "normal";
-cfgDVBS2.MODCOD = 6;                             % QPSK 2/3
-cfgDVBS2.DFL = 42960;
+cfgDVBS2.MODCOD = 1;                             % QPSK 1/4
+cfgDVBS2.DFL = 15928;% 42960; for QPSK 2/3
 cfgDVBS2.ScalingMethod = "Unit average power"; % Only use in APSK
 cfgDVBS2.RolloffFactor = 0.35;
 cfgDVBS2.HasPilots = true;
@@ -24,12 +24,17 @@ simParams.sps = cfgDVBS2.SamplesPerSymbol;             % Samples per symbol
 simParams.numFrames = 10;                              % Number of frames to be processed
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
 % simParams.EbNodB = 2.1;
-simParams.p = 0.4;                                     % fraction of bandwidth jammed
-simParams.JNR = -20;                                   % jammer to noise ratio (dB)
+simParams.p = 0.2;                                     % fraction of bandwidth jammed
+simParams.JNR = -40;                                   % jammer to noise ratio (dB)
+simParams.onlySOF = false;
 
 %% Compute BER as a function of EbNo
 
-EbNo = 1:0.05:2; % range of bit snr values to test
+EbNo_min = -0.3;
+EbNo_max = 0.8;
+sp = 0.1;
+
+EbNo = EbNo_min:sp:EbNo_max; % range of bit snr values to test
 
 ber_values = zeros(1, length(EbNo));
 
@@ -41,14 +46,14 @@ end
 
 
 %% Plot BER as a function of EbNo
-save_BER = true;
+save_BER = false;
 
-[clean_EbNo, clean_ber_values] = clean_BER(EbNo,ber_values);
+[clean_EbNo, clean_ber_values] = clean_ER(EbNo,ber_values);
 
+EbNo_path = sprintf('data/BER_data/EbNo-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
+BER_path = sprintf('data/BER_data/BER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
 
 if save_BER
-    EbNo_path = sprintf('data/BER_data/EbNo-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
-    BER_path = sprintf('data/BER_data/BER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,min(EbNo),max(EbNo));
     save(EbNo_path, "clean_EbNo");
     save(BER_path,"clean_ber_values");
 end
@@ -56,7 +61,7 @@ end
 
 
 %% actual data
-EbNo_int = 1:0.01:2;
+EbNo_int = EbNo_min:0.01:EbNo_max;
 BER_int = interp1(EbNo,ber_values,EbNo_int,"linear");
 
 semilogy(EbNo,ber_values,'o',EbNo_int,BER_int,':.')
@@ -68,7 +73,7 @@ ylabel('Bit Error Rate')
 hold off
 
 %% cleaned data
-EbNo_int = 0:0.01:3;
+EbNo_int = -1:0.01:1;
 BER_int = interp1(clean_EbNo,clean_ber_values,EbNo_int,"linear",'extrap');
 
 semilogy(clean_EbNo,clean_ber_values,'o',EbNo_int,BER_int,':.')
@@ -82,29 +87,39 @@ ylabel('Bit Error Rate')
 
 %% Theoretical BER in PBNJ symbol by symbol
 
+EbNo_noJ_path = sprintf('data/BER_data/EbNo-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,-1,1);
+BER_noJ_path = sprintf('data/BER_data/BER-modcod%d-%d-%d.mat',cfgDVBS2.MODCOD,-1,1);
+
 % linear Jammer to noise ratio
 % p = simParams.p;
 p = simParams.p;
 JNR = simParams.JNR; % decible value
 JNR = db2mag(JNR); % convert to magnitude
 
-S = load(EbNo_path);
+S = load(EbNo_noJ_path);
 EbNo_N = S.clean_EbNo;
 
-S = load(BER_path);
+S = load(BER_noJ_path);
 BER_N = S.clean_ber_values;
 
 
-ber_NJ = BER_NJ(clean_EbNo, clean_ber_values, JNR, p);
+ber_NJ = BER_NJ(EbNo_N, BER_N,EbNo_max,sp, JNR, p);
 
 
 
 
 %% Plot BER_NJ
-semilogy(clean_EbNo,ber_NJ,'x-')
+semilogy(EbNo_N,ber_NJ,'x-')
 hold on
 grid
-legend('Estimated BER')
+legend('theoretical BER with PBNJ')
+xlabel('Eb/No (dB)')
+ylabel('Bit Error Rate')
+
+semilogy(clean_EbNo,clean_ber_values,'x-')
+hold on
+grid
+legend('simulated BER with PBNJ')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
 
@@ -113,6 +128,6 @@ ylabel('Bit Error Rate')
 semilogy(EbNo_N,BER_N,'x-')
 hold on
 grid
-legend('Estimated BER')
+legend('No PBNJ BER')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
