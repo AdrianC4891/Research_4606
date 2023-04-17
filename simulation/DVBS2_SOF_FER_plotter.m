@@ -13,8 +13,8 @@ end
 
 cfgDVBS2.StreamFormat = "TS";
 cfgDVBS2.FECFrame = "normal";
-cfgDVBS2.MODCOD = 6;                             % QPSK 2/3
-cfgDVBS2.DFL = 42960;
+cfgDVBS2.MODCOD = 1;                             % QPSK 1/4
+cfgDVBS2.DFL = 15928;% 42960;
 cfgDVBS2.ScalingMethod = "Unit average power"; % Only use in APSK
 cfgDVBS2.RolloffFactor = 0.35;
 cfgDVBS2.HasPilots = true;
@@ -23,32 +23,35 @@ cfgDVBS2.SamplesPerSymbol = 2;
 simParams.sps = cfgDVBS2.SamplesPerSymbol;             % Samples per symbol
 simParams.numFrames = 10;                              % Number of frames to be processed
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
-simParams.EbNodB = 1.5;                                  % Energy per bit to noise ratio
+% simParams.EbNodB = 0;                                  % Energy per bit to noise ratio
 % simParams.p = 0.4;                                     % fraction of bandwidth jammed
-simParams.JNR = -20;                                   % jammer to noise ratio (dB)
-simParams.onlySOF = true;
+simParams.JNR = 5;                                   % jammer to noise ratio (dB)
+simParams.PBNJType = 1;                              % 0 - general PBNJ, 1 - SOF PBNJ, 2 - BOD PBNJ
 
 %% Compute FER as a function of EbNo
 
 p_values = 0:0.1:1; % range of fraction of band jammed values to test
-num_trials = 30;
+EbNo_values = 0:5:10; % range of EbNo values to test
+num_trials = 15;
 
-fer_values = zeros(1, length(p_values)); % averaged fer values
+fer_values = zeros(length(EbNo_values), length(p_values)); % averaged fer values
 pctPLH_values = zeros(1, length(p_values));
 pctPLF_values = zeros(1, length(p_values));
 
 fer_t = 0;
 fer_s = 0;
-
-for n=1:length(p_values)
-    for i = 1:num_trials
-        fprintf('trial number: %d/%d\n',i,num_trials);
-        simParams.p = p_values(n);
-        [fer_t,pctPLH_values(n),pctPLF_values(n)] = DVBS2_FER_calculator(cfgDVBS2,simParams);
-        fer_s = fer_s + fer_t;
+for k = 1:length(EbNo_values)
+    for n = 1:length(p_values)
+        for i = 1:num_trials
+            fprintf('trial number: %d/%d\n',i,num_trials);
+            simParams.p = p_values(n);
+            simParams.EbNodB = EbNo_values(k);
+            [fer_t,~,~] = DVBS2_FER_calculator(cfgDVBS2,simParams);
+            fer_s = fer_s + fer_t;
+        end
+        fer_values(k,n) = fer_s/num_trials;
+        fer_s = 0;
     end
-    fer_values(n) = fer_s/num_trials;
-    fer_s = 0;
 end
 
 
@@ -56,14 +59,14 @@ end
 %% Plot FER as a function of EbNo
 save_FER = true;
 
-[clean_p, clean_fer_values] = clean_ER(p_values,fer_values);
+% [clean_p, clean_fer_values] = clean_ER(p_values,fer_values);
 
 
 if save_FER
-    p_path = sprintf('data/FER_data/p-modcod%d-%d-%d-%1.1f.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB);
-    FER_path = sprintf('data/FER_data/FER-modcod%d-%d-%d-%1.1f.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB);
-    save(p_path, "clean_p");
-    save(FER_path,"clean_fer_values");
+    p_path = sprintf('data/FER_data/p-modcod%d-%d-%d-%1.1f-PBNJType%d.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB,simParams.PBNJType);
+    FER_path = sprintf('data/FER_data/FER-modcod%d-%d-%d-%1.1f-PBNJType%d.mat',cfgDVBS2.MODCOD,num_trials,simParams.numFrames,simParams.EbNodB,simParams.PBNJType);
+    save(p_path, "p_values");
+    save(FER_path,"fer_values");
 end
 
 
@@ -119,14 +122,17 @@ FER_N = S.clean_fer_values;
 % hold on
 % grid
 % legend('Estimated FER')
-% xlabel('Eb/No (dB)')
+% xlabel('Eb/No (dB)')N
 % ylabel('Frame Error Rate')
 
 % Plot original FER_N
-
-plot(p_N,FER_N,'x-')
 hold on
+% for k = 1:length(EbNo_values)
+%     plot(p_values,fer_values(k,:))
+% end
+plot(p_values,fer_values)
 grid
-legend('Estimated FER')
-xlabel('Eb/No (dB)')
-ylabel('Frame Error Rate')
+legendStrings = "Eb/No = " + string(EbNo_values);
+legend(legendStrings)
+xlabel('\rho')
+ylabel('averege FER')

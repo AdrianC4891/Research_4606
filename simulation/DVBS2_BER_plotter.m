@@ -26,7 +26,7 @@ simParams.chanBW = 36e6;                               % Channel bandwidth in He
 % simParams.EbNodB = 2.1;
 simParams.p = 0.2;                                     % fraction of bandwidth jammed
 simParams.JNR = -40;                                   % jammer to noise ratio (dB)
-simParams.onlySOF = false;
+simParams.PBNJType = 0;                              % 0 - general PBNJ, 1 - SOF PBNJ, 2 - BOD PBNJ
 
 %% Compute BER as a function of EbNo
 
@@ -112,22 +112,23 @@ ber_NJ = BER_NJ(EbNo_N, BER_N,EbNo_max,sp, JNR, p);
 semilogy(EbNo_N,ber_NJ,'x-')
 hold on
 grid
-legend('theoretical BER with PBNJ')
+% legend('theoretical BER with PBNJ')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
 
 semilogy(clean_EbNo,clean_ber_values,'x-')
-hold on
+% hold on
 grid
-legend('simulated BER with PBNJ')
+% legend('simulated BER with PBNJ')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
 
 % Plot original BER_N
 
 semilogy(EbNo_N,BER_N,'x-')
-hold on
+% hold on
 grid
-legend('No PBNJ BER')
+legend('theoretical BER with PBNJ','simulated BER with PBNJ','simulated BER no PBNJ')
 xlabel('Eb/No (dB)')
 ylabel('Bit Error Rate')
+

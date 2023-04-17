@@ -1,4 +1,4 @@
-function [rxIn,pctPLH,pctPLF] = PBNJ_SOF_symb_channel(txOut, EbNo, sps, modOrder, codeRate, ...
+function [rxIn,pctPLH,pctPLF] = PBNJ_BOD_symb_channel(txOut, EbNo, sps, modOrder, codeRate, ...
     JNR, p, simParams)
     
     rxIn = zeros(length(txOut),1);
@@ -31,17 +31,17 @@ function [rxIn,pctPLH,pctPLF] = PBNJ_SOF_symb_channel(txOut, EbNo, sps, modOrder
 
     % 1 symbol transmitted per hop
     for n=1:sps:(length(txOut) - filter_flush)
-        if mod(((n-1)/sps + 1), frameLen) <= 90
+        if mod(((n-1)/sps + 1), frameLen) > 90
             isJammed = binornd(1,p); % bernoulli distribution
             if isJammed
                 rxIn(n:n+sps-1) = rxIn(n:n+sps-1) + jammer;
-                pctPLH = pctPLH + 1;
+                pctPLF = pctPLF + 1;
             end
         end
     end
 
     pctPLH = pctPLH/(90*numFrames); % percentage of PLHeader symbols jammed
-    pctPLF = pctPLF/(length(txOut)/sps - 90); % percentage of PLFrame symbols jammed
+    pctPLF = pctPLF/((frameLen - 90)*numFrames); % percentage of PLFrame symbols jammed
   
     fprintf("EbNo = %f dB, EsNo = %f dB, JNR = %f, p = %f\n",EbNo, EsNodB, JNR, p);
 

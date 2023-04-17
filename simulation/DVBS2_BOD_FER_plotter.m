@@ -23,10 +23,10 @@ cfgDVBS2.SamplesPerSymbol = 2;
 simParams.sps = cfgDVBS2.SamplesPerSymbol;             % Samples per symbol
 simParams.numFrames = 10;                              % Number of frames to be processed
 simParams.chanBW = 36e6;                               % Channel bandwidth in Hertz
-% simParams.EbNodB = 2;                                  % Energy per bit to noise ratio
+% simParams.EbNodB = 0;                                  % Energy per bit to noise ratio
 % simParams.p = 0.4;                                     % fraction of bandwidth jammed
 simParams.JNR = 5;                                   % jammer to noise ratio (dB)
-simParams.PBNJType = 0;                                 % 0 - general PBNJ, 1 - SOF PBNJ, 2 - BOD PBNJ
+simParams.PBNJType = 2;                              % 0 - general PBNJ, 1 - SOF PBNJ, 2 - BOD PBNJ
 
 %% Compute FER as a function of EbNo
 
@@ -133,6 +133,23 @@ hold on
 plot(p_values,fer_values)
 grid
 legendStrings = "Eb/No = " + string(EbNo_values);
+legend(legendStrings)
+xlabel('\rho')
+ylabel('averege FER')
+
+
+%% Plot FER Components
+
+% fer_BOD = fer_values(1,:);
+% fer_NOR = fer_values(1,:);
+% fer_SOF = fer_values(1,:);
+
+hold on
+plot(p_values,fer_NOR)
+plot(p_values,fer_SOF)
+plot(p_values,fer_BOD)
+grid
+legendStrings = ["PBNJ Normal","PBNJ PLHEADER", "PBNJ XFECFRAME"];
 legend(legendStrings)
 xlabel('\rho')
 ylabel('averege FER')

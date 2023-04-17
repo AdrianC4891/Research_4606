@@ -28,65 +28,71 @@ function [fer,pctPLH,pctPLF] = DVBS2_FER_calculator(cfgDVBS2, simParams)
     plFrameSize = rxParams.plFrameSize;
     dataStInd = 1;
     
-    % Decode the PL header by using the HelperDVBS2PLHeaderRecover helper
-    % function. Start of frame (SOF) is 26 symbols, which are discarded
-    % before header decoding. They are only required for frame
-    % synchronization.
-    rxPLSCode = postRx(27:90);
-    [M,R,fecFrame,pilotStat] = HelperDVBS2PLHeaderRecover(rxPLSCode);
-    % Validate the decoded PL header.
-    if  M ~= rxParams.modOrder || R ~= rxParams.codeRate || ...
-            fecFrame ~= rxParams.cwLen || ~pilotStat
-        fprintf('%s\n','PL header decoding failed')
-        dataStInd = dataStInd + 1;
-    else % Demodulation and decoding
-        for frameCnt = 1:length(postRx)/plFrameSize
-            rxFrame = postRx((frameCnt-1)*plFrameSize+1:frameCnt*plFrameSize);
-            % Estimate noise variance by using
-            % HelperDVBS2NoiseVarEstimate helper function.
-            nVar = HelperDVBS2NoiseVarEstimate(rxFrame,rxParams.pilotInd,...
-                rxParams.refPilots,normFlag);
-            % The data begins at symbol 91 (after the header symbols).
-            rxDataFrame = rxFrame(91:end);
-            % Recover the BB frame.
-            rxBBFrame = satcom.internal.dvbs.s2BBFrameRecover(rxDataFrame,M,R, ...
-                fecFrame,pilotStat,nVar,false);
-            % Recover the input bit stream by using
-            % HelperDVBS2StreamRecover helper function.
-            if strcmpi(cfgDVBS2.StreamFormat,'GS') && ~rxParams.UPL
-                [decBits,isFrameLost] = HelperDVBS2StreamRecover(rxBBFrame);
-                if ~isFrameLost && length(decBits) ~= dataSize
-                    isFrameLost = true;
-                end
-            else
-                [decBits,isFrameLost,pktCRC] = HelperDVBS2StreamRecover(rxBBFrame);
-                if ~isFrameLost && length(decBits) ~= dataSize
-                    isFrameLost = true;
-                    pktCRC = zeros(0,1,'logical');
-                end
-                % Compute the packet error rate for TS or GS packetized
-                % mode.
-                pktsErr = pktsErr + numel(pktCRC) - sum(pktCRC);
-                pktsRec = pktsRec + numel(pktCRC);
-            end
-            if ~isFrameLost
-                ts = sprintf('%s','BB header decoding passed.');
-            else
-                ts = sprintf('%s','BB header decoding failed.');
-            end
-            % Compute the number of frames lost. CRC failure of baseband header
-            % is considered a frame loss.
-            numFramesLost = isFrameLost + numFramesLost;
-            fprintf('%s(Number of frames lost = %1d)\n',ts,numFramesLost)
-            % Compute the bits in error.
-            bitInd = (dataStInd-1)*dataSize+1:dataStInd*dataSize;
-            if ~isFrameLost
-                bitsErr = bitsErr + sum(data(bitInd) ~= decBits);
-            end
+
+    % Demodulation and decoding
+    for frameCnt = 1:length(postRx)/plFrameSize
+        rxFrame = postRx((frameCnt-1)*plFrameSize+1:frameCnt*plFrameSize);
+
+        % Decode the PL header by using the HelperDVBS2PLHeaderRecover helper
+        % function. Start of frame (SOF) is 26 symbols, which are discarded
+        % before header decoding. They are only required for frame
+        % synchronization.
+        rxPLSCode = rxFrame(27:90);
+        [M,R,fecFrame,pilotStat] = HelperDVBS2PLHeaderRecover(rxPLSCode);
+        % Validate the decoded PL header.
+        if  M ~= rxParams.modOrder || R ~= rxParams.codeRate || ...
+                fecFrame ~= rxParams.cwLen || ~pilotStat
+            fprintf('%s\n','PL header decoding failed')
             dataStInd = dataStInd + 1;
-
-
+            numFramesLost = numFramesLost + 1;
+            continue
         end
+
+
+        % Estimate noise variance by using
+        % HelperDVBS2NoiseVarEstimate helper function.
+        nVar = HelperDVBS2NoiseVarEstimate(rxFrame,rxParams.pilotInd,...
+            rxParams.refPilots,normFlag);
+        % The data begins at symbol 91 (after the header symbols).
+        rxDataFrame = rxFrame(91:end);
+        % Recover the BB frame.
+        rxBBFrame = satcom.internal.dvbs.s2BBFrameRecover(rxDataFrame,M,R, ...
+            fecFrame,pilotStat,nVar,false);
+        % Recover the input bit stream by using
+        % HelperDVBS2StreamRecover helper function.
+        if strcmpi(cfgDVBS2.StreamFormat,'GS') && ~rxParams.UPL
+            [decBits,isFrameLost] = HelperDVBS2StreamRecover(rxBBFrame);
+            if ~isFrameLost && length(decBits) ~= dataSize
+                isFrameLost = true;
+            end
+        else
+            [decBits,isFrameLost,pktCRC] = HelperDVBS2StreamRecover(rxBBFrame);
+            if ~isFrameLost && length(decBits) ~= dataSize
+                isFrameLost = true;
+                pktCRC = zeros(0,1,'logical');
+            end
+            % Compute the packet error rate for TS or GS packetized
+            % mode.
+            pktsErr = pktsErr + numel(pktCRC) - sum(pktCRC);
+            pktsRec = pktsRec + numel(pktCRC);
+        end
+        if ~isFrameLost
+            ts = sprintf('%s','BB header decoding passed.');
+        else
+            ts = sprintf('%s','BB header decoding failed.');
+        end
+        % Compute the number of frames lost. CRC failure of baseband header
+        % is considered a frame loss.
+        numFramesLost = isFrameLost + numFramesLost;
+        fprintf('%s(Number of frames lost = %1d)\n',ts,numFramesLost)
+        % Compute the bits in error.
+        bitInd = (dataStInd-1)*dataSize+1:dataStInd*dataSize;
+        if ~isFrameLost
+            bitsErr = bitsErr + sum(data(bitInd) ~= decBits);
+        end
+        dataStInd = dataStInd + 1;
+
+
     end
     
     fer = numFramesLost/simParams.numFrames; % frame error rate calculation
